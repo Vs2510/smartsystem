@@ -44,14 +44,43 @@ const firebaseConfig = {
     measurementId: "G-8G7ZL41GXS"
   };
 firebase.initializeApp(firebaseConfig);
-firebase.database().ref('/direct').on('value', (snapshot) => {
-    const direct = snapshot.val();
-    
+// Get the values of the fish feed count, timestamp, and flag from Firebase
+firebase.database().ref('/').on('value', (snapshot) => {
+    const fishFeedCount = snapshot.child('fishFeedCount').val();
+    const lastFishFeedTime = snapshot.child('lastFishFeedTime').val();
+    const fishFeedOccurred = snapshot.child('fishFeedOccurred').val();
+
     // Display the fish feed count on the website
-    document.getElementById('direct').textContent = direct;
-    const p = document.getElementById('message');
-    console.log(p);
-  });
+    document.getElementById('fishFeedCount').textContent = fishFeedCount;
+    document.getElementById('lastFishFeedTime').textContent=lastFishFeedTime;
+
+// Check if a fish feed has occurred within the last 10 seconds
+const currentTime = new Date().getTime();
+const elapsedTime = currentTime - lastFishFeedTime;
+if (fishFeedOccurred && elapsedTime <= 10000) {
+  document.getElementById('successMessage').style.display = 'block';
+} else {
+  document.getElementById('successMessage').style.display = 'none';
+}
+});
+// Call the function to check for success messages every second
+setInterval(() => {
+    firebase.database().ref('/').once('value', (snapshot) => {
+      const lastFishFeedTime = snapshot.child('lastFishFeedTime').val();
+      const fishFeedOccurred = snapshot.child('fishFeedOccurred').val();
+
+      // Check if a fish feed has occurred within the last 10 seconds
+      const currentTime = new Date().getTime();
+      const elapsedTime = currentTime - lastFishFeedTime;
+      if (fishFeedOccurred && elapsedTime <= 10000) {
+        document.getElementById('successMessage').style.display = 'block';
+      } else {
+        document.getElementById('successMessage').style.display = 'none';
+      }
+    });
+  }, 1000);
+
+
 
 var countRef = firebase.database().ref('count');
 countRef.on('value', function(snapshot) {
